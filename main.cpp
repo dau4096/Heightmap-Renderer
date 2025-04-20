@@ -14,7 +14,9 @@ std::array<int, 16> monitoredKeys = { //16 should cover necessary keys.
 	GLFW_KEY_W, GLFW_KEY_S,
 	GLFW_KEY_A, GLFW_KEY_D,
 	GLFW_KEY_E, GLFW_KEY_Q,
-	GLFW_KEY_1, GLFW_KEY_ESCAPE
+	GLFW_KEY_1, GLFW_KEY_ESCAPE,
+	GLFW_KEY_LEFT_SHIFT,
+	GLFW_KEY_LEFT_ALT
 };
 
 
@@ -114,28 +116,32 @@ int main() {
 			glfwGetCursorPos(Window, &cursorXPos, &cursorYPos);
 		}
 
+		float camSpeed = config::CAMERA_MOVE_SPEED;
+		if (keyMap[GLFW_KEY_LEFT_SHIFT]) {camSpeed *= config::CAMERA_MOVE_MULT_FAST;}
+		if (keyMap[GLFW_KEY_LEFT_ALT]) {camSpeed *= config::CAMERA_MOVE_MULT_FASTER;}
+
 
 		if (keyMap[GLFW_KEY_W]) {
-			camera.position.x += config::CAMERA_MOVE_SPEED * sin(camera.angle.x * constants::TO_RAD);
-			camera.position.y += config::CAMERA_MOVE_SPEED * cos(camera.angle.x * constants::TO_RAD);
+			camera.position.x += camSpeed * sin(camera.angle.x * constants::TO_RAD);
+			camera.position.y += camSpeed * cos(camera.angle.x * constants::TO_RAD);
 		}
 		if (keyMap[GLFW_KEY_S]) {
-			camera.position.x -= config::CAMERA_MOVE_SPEED * sin(camera.angle.x * constants::TO_RAD);
-			camera.position.y -= config::CAMERA_MOVE_SPEED * cos(camera.angle.x * constants::TO_RAD);
+			camera.position.x -= camSpeed * sin(camera.angle.x * constants::TO_RAD);
+			camera.position.y -= camSpeed * cos(camera.angle.x * constants::TO_RAD);
 		}
 		if (keyMap[GLFW_KEY_D]) {
-			camera.position.x += config::CAMERA_MOVE_SPEED * sin((camera.angle.x + 90.0f) * constants::TO_RAD);
-			camera.position.y += config::CAMERA_MOVE_SPEED * cos((camera.angle.x + 90.0f) * constants::TO_RAD);
+			camera.position.x += camSpeed * sin((camera.angle.x + 90.0f) * constants::TO_RAD);
+			camera.position.y += camSpeed * cos((camera.angle.x + 90.0f) * constants::TO_RAD);
 		}
 		if (keyMap[GLFW_KEY_A]) {
-			camera.position.x -= config::CAMERA_MOVE_SPEED * sin((camera.angle.x + 90.0f) * constants::TO_RAD);
-			camera.position.y -= config::CAMERA_MOVE_SPEED * cos((camera.angle.x + 90.0f) * constants::TO_RAD);
+			camera.position.x -= camSpeed * sin((camera.angle.x + 90.0f) * constants::TO_RAD);
+			camera.position.y -= camSpeed * cos((camera.angle.x + 90.0f) * constants::TO_RAD);
 		}
 		if (keyMap[GLFW_KEY_E]) {
-			camera.position.z += config::CAMERA_MOVE_SPEED;
+			camera.position.z += camSpeed;
 		}
 		if (keyMap[GLFW_KEY_Q]) {
-			camera.position.z -= config::CAMERA_MOVE_SPEED;
+			camera.position.z -= camSpeed;
 		}
 		camera.position.x = fmod(camera.position.x+constants::MAP_RESOLUTION.x, constants::MAP_RESOLUTION.x);
 		camera.position.y = fmod(camera.position.y+constants::MAP_RESOLUTION.y, constants::MAP_RESOLUTION.y);
@@ -147,7 +153,7 @@ int main() {
 		camera.angle.x += cursorXDelta * (config::TURN_SPEED_CURSOR);
 		camera.angle.y -= cursorYDelta * (config::TURN_SPEED_CURSOR);
 		camera.angle.x = utils::angleClamp(camera.angle.x);
-		camera.angle.y = glm::clamp(camera.angle.y, -90.0f+(verticalFOV/2.0f), 90.0f-(verticalFOV/2.0f));
+		camera.angle.y = glm::clamp(camera.angle.y, -90.0f+(verticalFOV), 90.0f-(verticalFOV));
 
 
 

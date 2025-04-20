@@ -32,6 +32,8 @@ namespace constants {
 namespace config {
 	constexpr float TURN_SPEED_CURSOR = 0.025f;
 	constexpr float CAMERA_MOVE_SPEED = 1.0f;
+	constexpr float CAMERA_MOVE_MULT_FAST = 3.0f;
+	constexpr float CAMERA_MOVE_MULT_FASTER = 10.0f;
 }
 
 namespace display {
