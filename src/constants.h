@@ -14,7 +14,7 @@ namespace constants {
 
 	//Map Data
 	constexpr glm::ivec2 MAP_RESOLUTION = glm::ivec2(1024, 1024);
-	constexpr std::string CURRENT_MAP = "comanche1";
+	constexpr std::string CURRENT_MAP = "comanche5";
 
 
 	//Physics/Rendering Frequency/dt
