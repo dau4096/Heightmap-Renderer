@@ -85,6 +85,7 @@ int main() {
 	for (int key : monitoredKeys) {
 		keyMap[key] = false;
 	}
+	float verticalFOV = constants::TO_DEG * 2 * atan(tan(radians(camera.FOV / 2.0f)) * (display::RENDER_RESOLUTION.x / display::RENDER_RESOLUTION.y));
 
 	while (!glfwWindowShouldClose(Window)) {
 		double frameStart = glfwGetTime();
@@ -123,12 +124,12 @@ int main() {
 			camera.position.y -= config::CAMERA_MOVE_SPEED * cos(camera.angle.x * constants::TO_RAD);
 		}
 		if (keyMap[GLFW_KEY_D]) {
-			camera.position.x += config::CAMERA_MOVE_SPEED * cos(camera.angle.x * constants::TO_RAD);
-			camera.position.y += config::CAMERA_MOVE_SPEED * sin(camera.angle.x * constants::TO_RAD);
+			camera.position.x += config::CAMERA_MOVE_SPEED * sin((camera.angle.x + 90.0f) * constants::TO_RAD);
+			camera.position.y += config::CAMERA_MOVE_SPEED * cos((camera.angle.x + 90.0f) * constants::TO_RAD);
 		}
 		if (keyMap[GLFW_KEY_A]) {
-			camera.position.x -= config::CAMERA_MOVE_SPEED * cos(camera.angle.x * constants::TO_RAD);
-			camera.position.y -= config::CAMERA_MOVE_SPEED * sin(camera.angle.x * constants::TO_RAD);
+			camera.position.x -= config::CAMERA_MOVE_SPEED * sin((camera.angle.x + 90.0f) * constants::TO_RAD);
+			camera.position.y -= config::CAMERA_MOVE_SPEED * cos((camera.angle.x + 90.0f) * constants::TO_RAD);
 		}
 		if (keyMap[GLFW_KEY_E]) {
 			camera.position.z += config::CAMERA_MOVE_SPEED;
@@ -136,21 +137,17 @@ int main() {
 		if (keyMap[GLFW_KEY_Q]) {
 			camera.position.z -= config::CAMERA_MOVE_SPEED;
 		}
+		camera.position.x = fmod(camera.position.x+constants::MAP_RESOLUTION.x, constants::MAP_RESOLUTION.x);
+		camera.position.y = fmod(camera.position.y+constants::MAP_RESOLUTION.y, constants::MAP_RESOLUTION.y);
 
 
 
 		double cursorXDelta = cursorXPos - cursorXPosPrev;
 		double cursorYDelta = cursorYPos - cursorYPosPrev;
 		camera.angle.x += cursorXDelta * (config::TURN_SPEED_CURSOR);
-		camera.angle.y += cursorYDelta * (config::TURN_SPEED_CURSOR);
+		camera.angle.y -= cursorYDelta * (config::TURN_SPEED_CURSOR);
 		camera.angle.x = utils::angleClamp(camera.angle.x);
-		camera.angle.y = glm::clamp(camera.angle.y, -90.0f, 90.0f);
-
-
-		printVec2(camera.angle);
-		printVec3(camera.position);
-		cout << endl;
-
+		camera.angle.y = glm::clamp(camera.angle.y, -90.0f+(verticalFOV/2.0f), 90.0f-(verticalFOV/2.0f));
 
 
 
@@ -167,12 +164,14 @@ int main() {
 		GLint cameraFocalLengthLocation = glGetUniformLocation(envShader, "cameraFocalLength");
 		GLint cameraFOVLocation = glGetUniformLocation(envShader, "cameraFOV");
 		GLint cameraMaxDistLocation = glGetUniformLocation(envShader, "cameraMaxDistance");
+		GLint skyColourLocation = glGetUniformLocation(envShader, "skyColour");
 		
 		glUniform3f(cameraPosLocation, camera.position.x, camera.position.y, camera.position.z);
 		glUniform2f(cameraAngleLocation, camera.angle.x, camera.angle.y);
 		glUniform1f(cameraFocalLengthLocation, camera.focalLength);
 		glUniform1f(cameraFOVLocation, camera.FOV);
 		glUniform1f(cameraMaxDistLocation, camera.viewDistance);
+		glUniform3f(skyColourLocation, display::SKY_COLOUR.x, display::SKY_COLOUR.y, display::SKY_COLOUR.z);
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

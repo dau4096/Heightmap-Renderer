@@ -13,8 +13,8 @@ namespace constants {
 
 
 	//Map Data
-	constexpr glm::ivec2 MAP_RESOLUTION = glm::ivec2(128, 128);
-	constexpr std::string CURRENT_MAP = "test";
+	constexpr glm::ivec2 MAP_RESOLUTION = glm::ivec2(1024, 1024);
+	constexpr std::string CURRENT_MAP = "comanche1";
 
 
 	//Physics/Rendering Frequency/dt
@@ -42,16 +42,17 @@ namespace display {
 
 	//Camera Assorted
 	constexpr float CAMERA_FOV = 70.0f;
-	constexpr float CAMERA_MAX_DISTANCE = 128.0f;
+	constexpr float CAMERA_MAX_DISTANCE = 4096.0f;
 	constexpr float CAMERA_FOCAL_LENGTH = 1.0f;
-	constexpr glm::vec3 CAMERA_START_POSITION = glm::vec3(0.0f, 0.0f, 16.0f);
+	constexpr glm::vec3 CAMERA_START_POSITION = glm::vec3(64.0f, 64.0f, 16.0f);
 	constexpr glm::vec2 CAMERA_START_ANGLE = glm::vec2(0.0f, 0.0f);
+	constexpr glm::vec3 SKY_COLOUR = glm::vec3(135.0f, 206.0f, 235.0f) / 255.0f;
 }
 
 
 namespace dev {
 	//Assorted DEV/DEBUG constants
-	constexpr int SHOW_FREQ = 1;
+	constexpr int SHOW_FREQ = 0;
 }
 
 #endif // CONSTANTS_H
