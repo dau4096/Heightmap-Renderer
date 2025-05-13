@@ -13,7 +13,7 @@ namespace render {
     void createConstUBO();
 
 
-    GLuint createTexture(int width, int height);
+    GLuint createTexture(int width, int height, GLint imageFormat=GL_RGBA32F);
     GLuint loadTexture(std::string fileName);
 
 

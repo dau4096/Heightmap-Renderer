@@ -14,7 +14,7 @@ namespace constants {
 
 	//Map Data
 	constexpr glm::ivec2 MAP_RESOLUTION = glm::ivec2(1024, 1024);
-	constexpr std::string CURRENT_MAP = "comanche5";
+	constexpr std::string CURRENT_MAP = "comanche7";
 
 
 	//Physics/Rendering Frequency/dt
@@ -38,7 +38,7 @@ namespace config {
 
 namespace display {
 	//Resolutions
-	constexpr glm::ivec2 SCREEN_RESOLUTION = glm::ivec2(640, 400);
+	constexpr glm::ivec2 SCREEN_RESOLUTION = glm::ivec2(640, 480);
 	constexpr glm::ivec2 RENDER_RESOLUTION = glm::ivec2(480, 270);
 
 
@@ -48,7 +48,11 @@ namespace display {
 	constexpr float CAMERA_FOCAL_LENGTH = 1.0f;
 	constexpr glm::vec3 CAMERA_START_POSITION = glm::vec3(64.0f, 64.0f, 16.0f);
 	constexpr glm::vec2 CAMERA_START_ANGLE = glm::vec2(0.0f, 0.0f);
+
+
+	//World Assorted
 	constexpr glm::vec3 SKY_COLOUR = glm::vec3(135.0f, 206.0f, 235.0f) / 255.0f;
+	constexpr int CLOUD_HEIGHT = 384;
 }
 
 

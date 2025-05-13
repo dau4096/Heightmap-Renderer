@@ -10,9 +10,11 @@ uniform float cameraFocalLength;
 uniform float cameraFOV;
 uniform float cameraMaxDistance;
 uniform vec3 skyColour;
+uniform int cloudHeight;
 
 
-layout(rgba32f, binding = 0) uniform image2D renderedFrame;
+layout(rgba32f, binding=0) uniform image2D renderedFrame;
+layout(r32f, binding=1) uniform image2D cloudMap;
 
 
 
@@ -76,7 +78,7 @@ void main() {
 
 		float t = float(offset) / float(maxV);
 		vec2 mapUV = (cameraPosition.xy + deltaXY*t) / mapLimits;
-		float height = texture(heightMap, mapUV).r * 255.0f; //36.0f?
+		float height = texture(heightMap, mapUV).r * 255.0f;
 
 		float rayZ = cameraPosition.z + (t * deltaZ);
 		if (rayZ < 0.0f) {
@@ -90,13 +92,34 @@ void main() {
 
 
 
-	if (minTValue != 1.0f) {
+	float compensatedCloudHeight = (1.0f - (minTValue / 2.0f)) * cloudHeight;
+
+	vec4 cloudContribution = vec4(1.0f, 1.0f, 1.0f, 0.0f);
+	if (((cameraPosition.z + deltaZ > compensatedCloudHeight) && (cameraPosition.z < cloudHeight))
+		 || ((cameraPosition.z + deltaZ < compensatedCloudHeight) && (cameraPosition.z > cloudHeight))){
+		ivec2 cloudUV = ivec2(cameraPosition.xy + deltaXY*minTValue);
+		float cloudOpacity = imageLoad(cloudMap, cloudUV).r;
+		cloudContribution = vec4(1.0f, 1.0f, 1.0f, cloudOpacity);
+	}
+
+	if (minTValue < 1.0f) {
+		//Must hit terrain
 		vec2 colourUV = (cameraPosition.xy + deltaXY*minTValue) / mapLimits;
 		vec3 colour = texture(colourMap, colourUV).rgb;
-		vec4 fragColour = vec4(colour, 1.0f);
 
-		imageStore(renderedFrame, framePosition, fragColour);
+		if ((cloudContribution.a > EPSILON) && (cameraPosition.z > cloudHeight)) {
+			vec4 fragColour = vec4(mix(colour.rgb, cloudContribution.rgb, cloudContribution.a), 1.0f);
+			imageStore(renderedFrame, framePosition, fragColour);
+		} else {
+			imageStore(renderedFrame, framePosition, vec4(colour.rgb, 1.0f));
+		}
 	} else {
-		imageStore(renderedFrame, framePosition, vec4(skyColour.rgb, 1.0f));
+		//Must hit sky.
+		if (cloudContribution.a > EPSILON) {
+			vec4 fragColour = vec4(mix(skyColour.rgb, cloudContribution.rgb, cloudContribution.a), 1.0f);
+			imageStore(renderedFrame, framePosition, fragColour);
+		} else {
+			imageStore(renderedFrame, framePosition, vec4(skyColour.rgb, 1.0f));
+		}
 	}
 }

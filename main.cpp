@@ -22,7 +22,7 @@ std::array<int, 16> monitoredKeys = { //16 should cover necessary keys.
 
 
 
-GLuint frameTextureID;
+GLuint renderedFrameID, cloudTextureID;
 glm::ivec2 currentScreenRes;
 unordered_map<int, bool> keyMap = {};
 
@@ -60,11 +60,14 @@ int main() {
 
 
 
-	frameTextureID = render::createTexture(display::RENDER_RESOLUTION.x, display::RENDER_RESOLUTION.y);
+	renderedFrameID = render::createTexture(display::RENDER_RESOLUTION.x, display::RENDER_RESOLUTION.y);
+	cloudTextureID = render::createTexture(constants::MAP_RESOLUTION.x, constants::MAP_RESOLUTION.y, GL_R32F);
 	GLuint heightMap = render::loadTexture(constants::CURRENT_MAP + "-height");
 	GLuint colourMap = render::loadTexture(constants::CURRENT_MAP + "-colour");
 
 
+	//Cloud shader
+	GLuint cloudShader = render::createShaderProgram("clouds", false);
 
 	//Environment shader
 	GLuint envShader = render::createShaderProgram("environment", false);
@@ -83,12 +86,13 @@ int main() {
 
 
 
-	// Initialize keyMap for input tracking
+	//Initialize keyMap for input tracking
 	for (int key : monitoredKeys) {
 		keyMap[key] = false;
 	}
 	float verticalFOV = constants::TO_DEG * 2 * atan(tan(radians(camera.FOV / 2.0f)) * (display::RENDER_RESOLUTION.x / display::RENDER_RESOLUTION.y));
 
+	int tick = 0;
 	while (!glfwWindowShouldClose(Window)) {
 		double frameStart = glfwGetTime();
 		glfwPollEvents();
@@ -157,10 +161,31 @@ int main() {
 
 
 
+		//Cloud Shader.
+		glViewport(0, 0, constants::MAP_RESOLUTION.x, constants::MAP_RESOLUTION.y);
+		glUseProgram(cloudShader);
+		glBindImageTexture(0, cloudTextureID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+
+		glBindTextureUnit(0, heightMap);
+
+		GLint cloudHeightLocation = glGetUniformLocation(cloudShader, "cloudHeight");
+		GLint timeLocation = glGetUniformLocation(cloudShader, "time");
+		
+		glUniform1i(cloudHeightLocation, display::CLOUD_HEIGHT);
+		glUniform1i(timeLocation, tick);
+
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		glBindVertexArray(0);
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		utils::GLErrorcheck("Cloud Shader", true);
+
 
 		//Environment Shader.
+		glViewport(0, 0, display::RENDER_RESOLUTION.x, display::RENDER_RESOLUTION.y);
 		glUseProgram(envShader);
-		glBindImageTexture(0, frameTextureID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+		glBindImageTexture(0, renderedFrameID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+		glBindImageTexture(1, cloudTextureID, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 
 		glBindTextureUnit(0, heightMap);
 		glBindTextureUnit(1, colourMap);
@@ -171,6 +196,7 @@ int main() {
 		GLint cameraFOVLocation = glGetUniformLocation(envShader, "cameraFOV");
 		GLint cameraMaxDistLocation = glGetUniformLocation(envShader, "cameraMaxDistance");
 		GLint skyColourLocation = glGetUniformLocation(envShader, "skyColour");
+		cloudHeightLocation = glGetUniformLocation(envShader, "cloudHeight");
 		
 		glUniform3f(cameraPosLocation, camera.position.x, camera.position.y, camera.position.z);
 		glUniform2f(cameraAngleLocation, camera.angle.x, camera.angle.y);
@@ -178,6 +204,7 @@ int main() {
 		glUniform1f(cameraFOVLocation, camera.FOV);
 		glUniform1f(cameraMaxDistLocation, camera.viewDistance);
 		glUniform3f(skyColourLocation, display::SKY_COLOUR.x, display::SKY_COLOUR.y, display::SKY_COLOUR.z);
+		glUniform1i(cloudHeightLocation, display::CLOUD_HEIGHT);
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -188,8 +215,9 @@ int main() {
 
 
 		//Display Shader and update screen.
+		glViewport(0, 0, currentScreenRes.x, currentScreenRes.y);
 		glUseProgram(displayShader);
-		glBindImageTexture(0, frameTextureID, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+		glBindTextureUnit(0, renderedFrameID);
 
 		GLuint screenResLoc = glGetUniformLocation(displayShader, "screenResolution");
 		glUniform2i(screenResLoc, currentScreenRes.x, currentScreenRes.y);
@@ -213,6 +241,7 @@ int main() {
 
 		cursorXPosPrev = cursorXPos;
 		cursorYPosPrev = cursorYPos;
+		tick++;
 	}
 
 	glfwDestroyWindow(Window);

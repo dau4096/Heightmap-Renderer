@@ -102,12 +102,12 @@ GLuint createShaderProgram(std::string name, bool hasVertexSource=true) {
 
 
 
-GLuint createTexture(int width, int height) {
+GLuint createTexture(int width, int height, GLint imageFormat=GL_RGBA32F) {
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, width, height);
+	glTexStorage2D(GL_TEXTURE_2D, 1, imageFormat, width, height);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
