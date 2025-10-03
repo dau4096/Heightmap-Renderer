@@ -6,7 +6,7 @@ using namespace utils;
 using namespace glm;
 
 
-namespace render {
+namespace graphics {
 //Functions
 
 
@@ -165,6 +165,59 @@ GLuint loadTexture(std::string fileName) {
 	return textureID;
 }
 
+
+GLuint createTexture2DArray(bool isHeight=false) {
+	GLuint mapArrayID;
+	glGenTextures(1, &mapArrayID);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, mapArrayID);
+
+
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, constants::MAP_RESOLUTION.x, constants::MAP_RESOLUTION.y, 29, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+
+
+	int width, height, channels;
+	int layerIndex = 0;
+	std::string extension = (isHeight) ? "-height.png" : "-colour.png";
+	for (int layerIndex=0; layerIndex<29; layerIndex++) {
+		std::string texturePath = "heightmaps/comanche" + std::to_string(layerIndex+1) + extension;
+		unsigned char* textureData = stbi_load(
+			texturePath.c_str(),
+			&width, &height,
+			&channels, 4
+		);
+
+		if (!textureData) {
+			std::cerr << "Failed to load texture : [" << texturePath << "] : " << stbi_failure_reason() << std::endl;
+			glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+			glDeleteTextures(1, &mapArrayID);
+			return 0;
+		}
+
+
+		if (width != constants::MAP_RESOLUTION.x || height != constants::MAP_RESOLUTION.y) {
+			std::cerr << "Texture " << texturePath << " has incorrect dimensions (" << width << "x" << height << "). Expected "
+					  << constants::MAP_RESOLUTION.x << "x" << constants::MAP_RESOLUTION.y << "." << std::endl;
+			stbi_image_free(textureData);
+			continue;
+		}
+
+
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layerIndex, constants::MAP_RESOLUTION.x, constants::MAP_RESOLUTION.y, 1, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
+
+		stbi_image_free(textureData);
+	}
+
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+	return mapArrayID;
+}
 
 
 

@@ -2,8 +2,8 @@
 #version 460 core
 
 
-layout(binding=0) uniform sampler2D heightMap;
-layout(binding=1) uniform sampler2D colourMap;
+layout(binding=0) uniform sampler2DArray heightMaps;
+layout(binding=1) uniform sampler2DArray colourMaps;
 uniform vec3 cameraPosition;
 uniform vec2 cameraAngle;
 uniform float cameraFocalLength;
@@ -11,6 +11,7 @@ uniform float cameraFOV;
 uniform float cameraMaxDistance;
 uniform vec3 skyColour;
 uniform int cloudHeight;
+uniform int mapIndex;
 
 
 layout(rgba32f, binding=0) uniform image2D renderedFrame;
@@ -31,7 +32,7 @@ void main() {
 	vec2 fragPosition = gl_FragCoord.xy;
 	ivec2 renderResolution = imageSize(renderedFrame);
 	ivec2 framePosition = ivec2(fragPosition);
-	ivec2 mapLimits = textureSize(heightMap, 0);
+	ivec2 mapLimits = textureSize(heightMaps, 0).xy;
 
 
 	float aspectRatio = renderResolution.y / renderResolution.x;
@@ -78,7 +79,7 @@ void main() {
 
 		float t = float(offset) / float(maxV);
 		vec2 mapUV = (cameraPosition.xy + deltaXY*t) / mapLimits;
-		float height = texture(heightMap, mapUV).r * 255.0f;
+		float height = texture(heightMaps, vec3(mapUV.xy, mapIndex)).r * 255.0f;
 
 		float rayZ = cameraPosition.z + (t * deltaZ);
 		if (rayZ < 0.0f) {
@@ -105,7 +106,7 @@ void main() {
 	if (minTValue < 1.0f) {
 		//Must hit terrain
 		vec2 colourUV = (cameraPosition.xy + deltaXY*minTValue) / mapLimits;
-		vec3 colour = texture(colourMap, colourUV).rgb;
+		vec3 colour = texture(colourMaps, vec3(colourUV.xy, mapIndex)).rgb;
 
 		if ((cloudContribution.a > EPSILON) && (cameraPosition.z > cloudHeight)) {
 			vec4 fragColour = vec4(mix(colour.rgb, cloudContribution.rgb, cloudContribution.a), 1.0f);

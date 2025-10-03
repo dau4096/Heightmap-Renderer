@@ -1,7 +1,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "C:/Users/User/Documents/code/.cpp/stb_image.h"
 #include "src/includes.h"
-#include "src/render.h"
+#include "src/graphics.h"
 #include "src/utils.h"
 using namespace std;
 using namespace utils;
@@ -16,9 +16,44 @@ std::array<int, 16> monitoredKeys = { //16 should cover necessary keys.
 	GLFW_KEY_E, GLFW_KEY_Q,
 	GLFW_KEY_1, GLFW_KEY_ESCAPE,
 	GLFW_KEY_LEFT_SHIFT,
-	GLFW_KEY_LEFT_ALT
+	GLFW_KEY_LEFT_ALT,
+	GLFW_KEY_2, GLFW_KEY_3
 };
 
+
+
+int mapIndex = 0;
+std::array<glm::vec3, 29> positions = {
+	glm::vec3(840.0f, 960.0f, 85.0f), 	// 0
+	glm::vec3(14.0f, 424.0f, 39.0f), 	// 1
+	glm::vec3(608.0f, 1000.0f, 54.0f), 	// 2
+	glm::vec3(26.0f, 597.0f, 80.0f), 	// 3
+	glm::vec3(64.0f, 64.0f, 64.0f), 	// 4
+	glm::vec3(64.0f, 64.0f, 64.0f), 	// 5
+	glm::vec3(64.0f, 64.0f, 64.0f), 	// 6
+	glm::vec3(64.0f, 64.0f, 64.0f), 	// 7
+	glm::vec3(64.0f, 64.0f, 64.0f), 	// 8
+	glm::vec3(64.0f, 64.0f, 64.0f), 	// 9
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//10
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//11
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//12
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//13
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//14
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//15
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//16
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//17
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//18
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//19
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//20
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//21
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//22
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//23
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//24
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//25
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//26
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//27
+	glm::vec3(64.0f, 64.0f, 64.0f), 	//28
+};
 
 
 
@@ -45,7 +80,7 @@ int main() {
 	currentScreenRes = display::SCREEN_RESOLUTION;
 
 
-	GLFWwindow* Window = render::initializeWindow(currentScreenRes.x, currentScreenRes.y, "Heightmap-Renderer/main");
+	GLFWwindow* Window = graphics::initializeWindow(currentScreenRes.x, currentScreenRes.y, "Heightmap-Renderer/main");
 	glfwSetFramebufferSizeCallback(Window, framebuffer_size_callback);
 	glfwGetCursorPos(Window, &cursorXPos, &cursorYPos);
 	glEnable(GL_BLEND);
@@ -60,26 +95,26 @@ int main() {
 
 
 
-	renderedFrameID = render::createTexture(display::RENDER_RESOLUTION.x, display::RENDER_RESOLUTION.y);
-	cloudTextureID = render::createTexture(constants::MAP_RESOLUTION.x, constants::MAP_RESOLUTION.y, GL_R32F);
-	GLuint heightMap = render::loadTexture(constants::CURRENT_MAP + "-height");
-	GLuint colourMap = render::loadTexture(constants::CURRENT_MAP + "-colour");
+	renderedFrameID = graphics::createTexture(display::RENDER_RESOLUTION.x, display::RENDER_RESOLUTION.y);
+	cloudTextureID = graphics::createTexture(constants::MAP_RESOLUTION.x, constants::MAP_RESOLUTION.y, GL_R32F);
+	GLuint heightMapArray = graphics::createTexture2DArray(true);
+	GLuint colourMapArray = graphics::createTexture2DArray(false);
 
 
 	//Cloud shader
-	GLuint cloudShader = render::createShaderProgram("clouds", false);
+	GLuint cloudShader = graphics::createShaderProgram("clouds", false);
 
 	//Environment shader
-	GLuint envShader = render::createShaderProgram("environment", false);
+	GLuint envShader = graphics::createShaderProgram("environment", false);
 
 	//Display Shader
-	GLuint displayShader = render::createShaderProgram("display");
+	GLuint displayShader = graphics::createShaderProgram("display");
 
 
 
 	glViewport(0, 0, currentScreenRes.x, currentScreenRes.y);
 	glDisable(GL_DEPTH_TEST);
-	GLuint VAO = render::getVAO();
+	GLuint VAO = graphics::getVAO();
 
 
 	utils::GLErrorcheck("Initialisation", true);
@@ -92,7 +127,10 @@ int main() {
 	}
 	float verticalFOV = constants::TO_DEG * 2 * atan(tan(radians(camera.FOV / 2.0f)) * (display::RENDER_RESOLUTION.x / display::RENDER_RESOLUTION.y));
 
+	bool prevpress = false;
 	int tick = 0;
+	int lastChange = 0;
+	camera.position = positions[0];
 	while (!glfwWindowShouldClose(Window)) {
 		double frameStart = glfwGetTime();
 		glfwPollEvents();
@@ -102,18 +140,27 @@ int main() {
 			int keyState = glfwGetKey(Window, key);
 			if (keyState == GLFW_PRESS) {
 				keyMap[key] = true;
+				if ((key == GLFW_KEY_2) and (!prevpress)) { //Manually swap to next map.
+					mapIndex = (mapIndex + 1) % 29;
+					camera.position = positions[mapIndex];
+					prevpress = true;
+				}
+				if (key == GLFW_KEY_3) { //Debug position.
+					std::cout << (mapIndex+1) << " = (" << camera.position.x << ", " << camera.position.y << ", " << camera.position.z << ")" << std::endl;
+				}
 
 			} else if (keyState == GLFW_RELEASE) {
 				keyMap[key] = false;
 			}
 		}
+		prevpress = keyMap[GLFW_KEY_2];
 
 
 		if (keyMap[GLFW_KEY_ESCAPE]) {
 			break; //Quit
 		}
 
-		if (keyMap[GLFW_KEY_1]) {
+		if (!keyMap[GLFW_KEY_1]) {
 			glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);			
 		} else {
 			glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -154,10 +201,18 @@ int main() {
 
 		double cursorXDelta = cursorXPos - cursorXPosPrev;
 		double cursorYDelta = cursorYPos - cursorYPosPrev;
-		camera.angle.x += cursorXDelta * (config::TURN_SPEED_CURSOR);
+		camera.angle.x += cursorXDelta * (config::TURN_SPEED_CURSOR) + config::TURN_SPEED_AUTO;
 		camera.angle.y -= cursorYDelta * (config::TURN_SPEED_CURSOR);
-		camera.angle.x = utils::angleClamp(camera.angle.x);
 		camera.angle.y = glm::clamp(camera.angle.y, -90.0f+(verticalFOV), 90.0f-(verticalFOV));
+
+		if (camera.angle.x > 360.0f) {
+			//Move to next map.
+			mapIndex = (mapIndex + 1) % 29;
+			camera.position = positions[mapIndex] + glm::vec3(0.5f, 0.5f, 0.0f);
+			camera.angle.x = 0.0f;
+			std::cout << "Changing to map: " << (mapIndex + 1) << std::endl << ((tick - lastChange) * constants::DT) << " seconds elapsed since last change." << std::endl << (tick * constants::DT) << " seconds total elapsed time." << std::endl;;
+			lastChange = tick;
+		}
 
 
 
@@ -166,7 +221,7 @@ int main() {
 		glUseProgram(cloudShader);
 		glBindImageTexture(0, cloudTextureID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 
-		glBindTextureUnit(0, heightMap);
+		glBindTextureUnit(0, heightMapArray);
 
 		GLint cloudHeightLocation = glGetUniformLocation(cloudShader, "cloudHeight");
 		GLint timeLocation = glGetUniformLocation(cloudShader, "time");
@@ -187,8 +242,8 @@ int main() {
 		glBindImageTexture(0, renderedFrameID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 		glBindImageTexture(1, cloudTextureID, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 
-		glBindTextureUnit(0, heightMap);
-		glBindTextureUnit(1, colourMap);
+		glBindTextureUnit(0, heightMapArray);
+		glBindTextureUnit(1, colourMapArray);
 
 		GLint cameraPosLocation = glGetUniformLocation(envShader, "cameraPosition");
 		GLint cameraAngleLocation = glGetUniformLocation(envShader, "cameraAngle");
@@ -197,6 +252,7 @@ int main() {
 		GLint cameraMaxDistLocation = glGetUniformLocation(envShader, "cameraMaxDistance");
 		GLint skyColourLocation = glGetUniformLocation(envShader, "skyColour");
 		cloudHeightLocation = glGetUniformLocation(envShader, "cloudHeight");
+		GLint mapIndexLocation = glGetUniformLocation(envShader, "mapIndex");
 		
 		glUniform3f(cameraPosLocation, camera.position.x, camera.position.y, camera.position.z);
 		glUniform2f(cameraAngleLocation, camera.angle.x, camera.angle.y);
@@ -205,6 +261,7 @@ int main() {
 		glUniform1f(cameraMaxDistLocation, camera.viewDistance);
 		glUniform3f(skyColourLocation, display::SKY_COLOUR.x, display::SKY_COLOUR.y, display::SKY_COLOUR.z);
 		glUniform1i(cloudHeightLocation, display::CLOUD_HEIGHT);
+		glUniform1i(mapIndexLocation, mapIndex);
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

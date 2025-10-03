@@ -31,6 +31,8 @@ namespace constants {
 
 namespace config {
 	constexpr float TURN_SPEED_CURSOR = 0.025f;
+	constexpr float TURN_SPEED_AUTO = 0.1f;
+
 	constexpr float CAMERA_MOVE_SPEED = 1.0f;
 	constexpr float CAMERA_MOVE_MULT_FAST = 3.0f;
 	constexpr float CAMERA_MOVE_MULT_FASTER = 10.0f;
@@ -38,8 +40,8 @@ namespace config {
 
 namespace display {
 	//Resolutions
-	constexpr glm::ivec2 SCREEN_RESOLUTION = glm::ivec2(640, 480);
-	constexpr glm::ivec2 RENDER_RESOLUTION = glm::ivec2(480, 270);
+	constexpr glm::ivec2 SCREEN_RESOLUTION = glm::ivec2(1080, 1920);
+	constexpr glm::ivec2 RENDER_RESOLUTION = glm::ivec2(540, 960);
 
 
 	//Camera Assorted

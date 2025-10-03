@@ -1,7 +1,7 @@
 /* clouds.frag */
 #version 460 core
 
-layout(binding=0) uniform sampler2D heightMap;
+layout(binding=0) uniform sampler2DArray heightMaps;
 uniform int cloudHeight;
 uniform int time;
 
