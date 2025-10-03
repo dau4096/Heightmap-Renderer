@@ -40,8 +40,8 @@ void main() {
 	vec2 rayDirectionXY = vec2(sin(angleXY), cos(angleXY));
 
 
-	float verticalFOV = 2 * atan(tan(radians(cameraFOV / 2.0f)) * (renderResolution.x / renderResolution.y));
-	float angleZ = (-(fragPosition.y / renderResolution.y) + 0.5f) * -verticalFOV;
+	float ndcY = (fragPosition.y / renderResolution.y) * 2.0f - 1.0f; //[-1.0f - 1.0f]
+	float angleZ = ndcY * radians(cameraFOV / 2.0f);
 	float deltaZ = cameraMaxDistance * tan(angleZ + radians(cameraAngle.y));
 	float actualMaxDistance = cameraMaxDistance;
 	float t;
